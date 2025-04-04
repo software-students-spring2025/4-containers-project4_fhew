@@ -7,4 +7,4 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-CMD ["python", "MLclient.py"]
+CMD ["python", "ml_client.py"]

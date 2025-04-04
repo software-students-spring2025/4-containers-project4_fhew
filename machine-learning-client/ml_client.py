@@ -1,3 +1,5 @@
+"""ML client that analyzes data and stores results in MongoDB."""
+
 from pymongo import MongoClient
 
 # Connect to MongoDB service in Docker
