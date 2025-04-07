@@ -1,1 +1,4 @@
 pymongo
+matplotlib
+pandas
+math
