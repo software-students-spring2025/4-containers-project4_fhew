@@ -26,7 +26,6 @@ jobs:
           pip install --upgrade pip
           pip install pipenv
           pipenv install --dev
-          pipenv install -e .
           pipenv install pytest coverage
 
       - name: Run tests and coverage

@@ -4,14 +4,17 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pylint = "*"
-black = "*"
-pytest = "*"
-coverage = "*"
+pymongo = "*"
 
 [dev-packages]
 pytest = "*"
 build = "*"
+black = "*"
+coverage = "*"
+pylint = "*"
+pandas = "*"
+matplotlib = "*"
+pymongo = "*"
 
 [requires]
 python_version = "3.9"
