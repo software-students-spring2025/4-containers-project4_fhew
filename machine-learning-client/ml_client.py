@@ -8,6 +8,7 @@ db = client["sound_data"]
 collection = db["analysis"]
 
 def run_analysis():
+    # using k-mean algorithm
     sample_data = {
         "audio1": "blue jay",
         "audio2": "owl",
@@ -17,3 +18,4 @@ def run_analysis():
 
 if __name__ == "__main__":
     run_analysis()
+
