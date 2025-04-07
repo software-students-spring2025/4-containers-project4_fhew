@@ -7,11 +7,14 @@ name = "pypi"
 pymongo = "*"
 
 [dev-packages]
-pylint = "*"
 pytest = "*"
 build = "*"
 black = "*"
 coverage = "*"
+pylint = "*"
+pandas = "*"
+matplotlib = "*"
+pymongo = "*"
 
 [requires]
 python_version = "3.9"
