@@ -10,6 +10,7 @@ pytest = "*"
 coverage = "*"
 
 [dev-packages]
+build = "*"
 
 [requires]
-python_version = "3.10"
+python_version = "3.9"
