@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Nearby Emergency Services</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            padding: 2em;
+            color: #333;
+        }
+
+        .container {
+            background: white;
+            max-width: 600px;
+            margin: auto;
+            padding: 2em;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        button {
+            padding: 10px;
+            background: #235a31;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #235a31a0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Find Emergency Services Near You</h1>
+        {% if services %}
+            <ul>
+                {% for service in services %} <!--Temp because this might have to be changed after connecting to database-->
+                    <li>
+                        <strong>{{ service.type }}</strong><br>
+                        Name: {{ service.name }}<br>
+                        Distance: {{ service.distance }} mi<br>
+                        ETA: {{ service.travel_time }} mins
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Can't find any services near you. Check back later.</p>
+        {% endif %}
+        <a href="/">Return home</a>
+    </div>
+</body>
+</html>
