@@ -19,9 +19,13 @@ services:
       - mongo-data:/data/db
 
   ml-client:
-    build: ./machine-learning-client
+    build:
+      context: ./machine-learning-client
+    container_name: ml-client
     depends_on:
       - mongodb
+    volumes:
+      - ./machine-learning-client/static:/app/static
     environment:
       - MONGO_URI=mongodb://mongodb:27017
 
