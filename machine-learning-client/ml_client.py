@@ -42,7 +42,7 @@ def run_analysis():
         "risk_level": risk_level,
     }
     analysis_collection.insert_one(analysis_result)
-    print("✔️ Analysis complete. Data inserted into MongoDB!")
+    print("Analysis complete. Data inserted into MongoDB!")
 
 
 def find_near_by_stations(user_lat, user_lon, stations, radius_km=5):
@@ -174,7 +174,7 @@ def visualize_stations(
     image_path = os.path.join(output_dir, image_name)
     plt.savefig(image_path)
     plt.close()
-    print(f"🖼️ Map image saved to {image_path}")
+    print(f"Map image saved to {image_path}")
     return image_path
 
 

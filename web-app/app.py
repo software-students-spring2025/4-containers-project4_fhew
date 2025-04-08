@@ -6,7 +6,7 @@ from pymongo import MongoClient
 app = Flask(__name__)
 client = MongoClient("mongodb://mongodb:27017")
 db = client["emergency_services"]
-#we will obv have to change this once the mongodb database is sest up
+#we will obv have to change this once the mongodb database is set up
 
 @app.route("/")
 def home():
