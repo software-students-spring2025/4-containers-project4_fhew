@@ -5,6 +5,7 @@ Setting up the test client.
 import pytest
 from app import app
 
+
 @pytest.fixture
 def test_client():
     """
