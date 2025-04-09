@@ -37,41 +37,6 @@ def show_results():
     else:
         return render_template("show_results.html", services=[], risk="No data", image_path=None)
 
-@app.route("/mock-data")
-def insert_mock_data():
-    """Insert mock GPS + analysis data into MongoDB for testing visualization."""
-    mock_result = {
-        "user_location": {
-            "latitude": 40.5412,
-            "longitude": -74.1515,
-        },
-        "nearby_stations": [
-            {
-                "station_name": "Engine 161/Ladder 81",
-                "latitude": 40.5416,
-                "longitude": -74.1519,
-                "functionalities": ["pumper", "ladder"],
-                "distance_km": 0.05,
-                "type": "Fire Station",
-                "name": "Engine 161",
-                "distance": 0.05,
-                "travel_time": 1
-            }
-        ],
-        "risk_level": "moderate risk"
-    }
-    db.analysis.insert_one(mock_result)
-
-    # Generate map visualization
-    from ml_client import visualize_stations
-    visualize_stations(
-        user_location=mock_result["user_location"],
-        nearby_stations=mock_result["nearby_stations"],
-        image_name="map.png",
-        output_dir="/app/static"
-    )
-    return "✅ Mock data inserted and image generated."
-
 @app.route("/map")
 def show_map():
     """Display just the generated map image."""
