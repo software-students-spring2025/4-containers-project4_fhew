@@ -2,6 +2,7 @@
 
 from flask import Flask, render_template, request
 from pymongo import MongoClient
+from datetime import datetime
 
 app = Flask(__name__)
 client = MongoClient("mongodb://mongodb:27017")
@@ -14,25 +15,31 @@ def home():
     return render_template("home.html")
 
 @app.route("/find-location", methods=["POST"])
-def find_location():
+def find_location(reqType):
     """Collect geolocationdata and store it in the mongodb database."""
-    data = request.get_json()
-    db.locations.insert_one(data)
+    data = {}
+    data.Timestamp = datetime.now()
+    data.ReqType = reqType
+    #data.location = ~~~ needs to still be found
+    data.resultIDs = []
+    db.Request.insert_one(data)
     return {"message": "Location found"}
 
-@app.route("/show-results")
-def show_results():
+@app.route("/show-results/<id>")
+def show_results(id):
     """Show results from the nearest emergency services search."""
     # Get the latest result
-    analysis = db.analysis.find_one(sort=[('_id', -1)])  
-    if analysis:
-        services = analysis.get("nearby_stations", [])
-        risk = analysis.get("risk_level", "Unknown")
-        user_location = analysis.get("user_location")
+    req = db.Request.find_one({'_id':id})
+    nearby_services = []
+    for resIds in req.resultIDs:
+        nearby_services.append(db.Result.find_one({'_id':resIds}))
+    if nearby_services.count > 0:
+        #risk = analysis.get("risk_level", "Unknown") ~~Needs to be calculated~~
+        user_location = req.location
         return render_template(
             "show_results.html",
-            services=services,
-            risk=risk,
+            services=nearby_services,
+            risk="Placeholder",
             image_path="static/map.png"
         )
     else:
