@@ -2,12 +2,11 @@
 
 from flask import Flask, render_template, request
 from pymongo import MongoClient
-from datetime import datetime
 
 app = Flask(__name__)
 client = MongoClient("mongodb://mongodb:27017")
 db = client["emergency_services"]
-#we will obv have to change this once the mongodb database is set up
+#we will obv have to change this once the mongodb database is sest up
 
 @app.route("/")
 def home():
@@ -15,27 +14,36 @@ def home():
     return render_template("home.html")
 
 @app.route("/find-location", methods=["POST"])
-def find_location(reqType):
+def find_location():
     """Collect geolocationdata and store it in the mongodb database."""
-    data = {}
-    data.Timestamp = datetime.now()
-    data.ReqType = reqType
-    #data.location = ~~~ needs to still be found
-    data.resultIDs = []
-    db.Request.insert_one(data)
+    data = request.get_json()
+    db.locations.insert_one(data)
     return {"message": "Location found"}
 
-@app.route("/show-results/<id>")
-def show_results(id):
+@app.route("/show-results")
+def show_results():
     """Show results from the nearest emergency services search."""
-    req = db.Request.find_one({'_id':id})
-    nearby_services = []
-    for resIds in req.resultIDs:
-        nearby_services.append(db.Result.find_one({'_id':resIds}))
-    
-    return render_template("show_results.html", services=nearby_services)
+    # Get the latest result
+    analysis = db.analysis.find_one(sort=[('_id', -1)])  
+    if analysis:
+        services = analysis.get("nearby_stations", [])
+        risk = analysis.get("risk_level", "Unknown")
+        user_location = analysis.get("user_location")
+        return render_template(
+            "show_results.html",
+            services=services,
+            risk=risk,
+            image_path="static/map.png"
+        )
+    else:
+        return render_template("show_results.html", services=[], risk="No data", image_path=None)
+
+@app.route("/map")
+def show_map():
+    """Display just the generated map image."""
+    return render_template("map.html", image_path="static/map.png")
 
 # main driver function
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000, debug=True) 
-    #won't let me access the site without the host and port params
+    app.run(host="0.0.0.0", port=5002, debug=True, use_reloader=False, use_debugger=False)
+    #fixed port 5000 issue by changing to 5002

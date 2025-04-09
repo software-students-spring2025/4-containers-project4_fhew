@@ -52,9 +52,11 @@
                     </li>
                 {% endfor %}
             </ul>
+            <h2>Risk Level: {{ risk }}</h2>
         {% else %}
             <p>Can't find any services near you. Check back later.</p>
         {% endif %}
+        <a href="/map">🗺️ View Full Map</a>
         <a href="/">Return home</a>
     </div>
 </body>
