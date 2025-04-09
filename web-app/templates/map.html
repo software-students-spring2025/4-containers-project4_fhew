@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Emergency Services Map</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+
+    <style>
+        body {
+            background: #f4f4f4;
+            font-family: Arial, sans-serif;
+            padding: 2em;
+            text-align: center;
+            color: #333;
+        }
+
+        #map {
+            height: 500px;
+            max-width: 900px;
+            margin: 2em auto;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 20px;
+            text-decoration: none;
+            color: #235a31;
+            font-weight: bold;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>Nearby Emergency Services Map</h1>
+
+    <!-- 🗺️ MAP GOES HERE -->
+    <div id="map"></div>
+
+    <a href="/show-results">← Back to Results</a>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+
+    <script>
+        // Mock harcoded data for visualize test
+        const userLocation = { latitude: 40.5412, longitude: -74.1515 };
+        const stations = [
+            {
+                latitude: 40.5416,
+                longitude: -74.1519,
+                distance: 0.05,
+                travel_time: 1,
+                name: "Engine 161",
+                functionalities: ["pumper", "ladder"]
+            },
+            {
+                latitude: 40.5422,
+                longitude: -74.1525,
+                distance: 0.08,
+                travel_time: 2,
+                name: "Rescue 5",
+                functionalities: ["rescue"]
+            }
+        ];
+
+        const map = L.map('map').setView([userLocation.latitude, userLocation.longitude], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // User marker
+        L.marker([userLocation.latitude, userLocation.longitude], {
+            title: 'You',
+        }).addTo(map)
+          .bindPopup("📍 Your Location")
+          .openPopup();
+
+        // Optional radius
+        L.circle([userLocation.latitude, userLocation.longitude], {
+            radius: 5000,
+            color: 'gray',
+            fill: false,
+            dashArray: '5,5'
+        }).addTo(map);
+
+        // Prepare heatmap data
+        const heatPoints = stations.map(station => {
+            let intensity = 0.4;
+            const funcs = station.functionalities || [];
+            if (funcs.length === 1) intensity = 1.0;
+            else if (funcs.length === 2) intensity = 0.6;
+            else if (funcs.length >= 3) intensity = 0.2;
+
+            return [station.latitude, station.longitude, intensity];
+        });
+
+        // Heat layer
+        L.heatLayer(heatPoints, {
+            radius: 30,
+            blur: 20,
+            maxZoom: 17,
+            gradient: {
+                0.2: 'blue',
+                0.4: 'lime',
+                0.6: 'yellow',
+                1.0: 'red'
+            }
+        }).addTo(map);
+
+        // Station markers
+        stations.forEach(station => {
+            L.marker([station.latitude, station.longitude])
+                .addTo(map)
+                .bindPopup(`
+                    <strong>${station.name || station.station_name}</strong><br>
+                    ${station.distance} mi<br>
+                    ETA: ${station.travel_time} mins
+                `);
+        });
+    </script>
+</body>
+</html>
