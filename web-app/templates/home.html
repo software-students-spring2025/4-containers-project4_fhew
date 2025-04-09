@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Nearby Emergency Services</title>
@@ -17,7 +18,7 @@
             margin: auto;
             padding: 2em;
             border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             text-align: center;
         }
 
@@ -36,6 +37,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>Find Emergency Services Near You</h1>
@@ -45,28 +47,36 @@
     </div>
 
     <script>
-        function getLocation(){
-            if(navigator.geolocation){
+        function getLocation() {
+            if (navigator.geolocation) {
                 document.getElementById("location").textContent = "Finding your location...";
-                navigator.geolocation.getCurrentPosition(success,error);
-            }else{
+                navigator.geolocation.getCurrentPosition(success, error);
+            } else {
                 document.getElementById("location").textContent = "Geolocation is not supported."
             }
         }
         function success(position) {
+            const userLocation = {
+                lat: position.coords.latitude,
+                long: position.coords.longitude
+            };
+
+            // Store in localStorage so we can use it later in map.html
+            localStorage.setItem("userLocation", JSON.stringify(userLocation));
+
             fetch("/find-location", {
-                method: "POST", 
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude
-                })
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(userLocation)
             }).then(response => response.json())
-                .then(longlat => {window.location.href = "/show-results"});
+                .then(data => {
+                    window.location.href = `/show-results/${data.id}`;
+                });
         }
         function error() {
             alert("Sorry, we can't find your location.");
         }
     </script>
 </body>
+
 </html>

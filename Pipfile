@@ -8,6 +8,7 @@ pytest = "*"
 pytest-cov = "*"
 flask = "*"
 pymongo = "*"
+requests = "*"
 
 [dev-packages]
 
