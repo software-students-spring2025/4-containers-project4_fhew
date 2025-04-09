@@ -6,7 +6,7 @@ import pytest
 from app import app
 
 @pytest.fixture
-def client():
+def test_client():
     """
     Fixture to create test client for Flask.
     """
