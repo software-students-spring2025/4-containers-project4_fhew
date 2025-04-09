@@ -45,8 +45,10 @@
                     <li>
                         <strong>{{ service.type }}</strong><br>
                         Name: {{ service.name }}<br>
-                        Distance: {{ service.distance }} mi<br>
+                        Urgency: {{service.urgency}} <br>
+                        Distance: {{ service.travel_distance }} mi<br>
                         ETA: {{ service.travel_time }} mins
+
                     </li>
                 {% endfor %}
             </ul>
