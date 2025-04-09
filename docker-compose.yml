@@ -1,6 +1,9 @@
 services:
   web: 
     build: ./web-app
+    container_name: flask-webapp
+    networks:
+      - appnet
     ports:
       - "5002:5002"
     depends_on:
@@ -13,6 +16,8 @@ services:
   mongodb:
     image: mongo
     container_name: mongodb
+    networks:
+      - appnet
     ports:
       - "27017:27017"
     volumes:
@@ -22,12 +27,18 @@ services:
     build:
       context: ./machine-learning-client
     container_name: ml-client
+    networks:
+      - appnet
     depends_on:
       - mongodb
     volumes:
       - ./machine-learning-client/static:/app/static
     environment:
       - MONGO_URI=mongodb://mongodb:27017
+
+networks:
+  appnet:
+    driver: bridge
 
 volumes:
   mongo-data:
