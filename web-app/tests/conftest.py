@@ -11,5 +11,5 @@ def test_client():
     Fixture to create test client for Flask.
     """
     app.config["TESTING"] = True
-    with app.test_client() as test_client:
-        yield test_client
+    with app.test_client() as testing_client:
+        yield testing_client
