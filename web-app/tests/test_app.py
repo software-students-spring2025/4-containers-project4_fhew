@@ -1,7 +1,7 @@
-# web-app/tests/test_app.py
-
+"""
+Testing app.py at 83% coverage.
+"""
 from unittest.mock import patch, MagicMock
-from app import app
 
 def test_home_route(client):
     """
@@ -11,33 +11,36 @@ def test_home_route(client):
     assert response.status_code == 200
     assert b"<html" in response.data or b"<!DOCTYPE html" in response.data
 
-@patch("app.db.locations.insert_one")
+@patch("app.db")
 def test_find_location(mock_insert, client):
     """
     Test that a POST request to /find-location inserts data into the database and returns success.
     """
-    print("MOCK INSERT CALLED")
-    data = {"latitude": 40.0, "longitude": -70.0}
-    mock_insert.return_value = MagicMock()
-    
+    mock_insert_result = MagicMock()
+    mock_insert_result.inserted_id = "mockid123"
+    mock_insert.Request.insert_one.return_value = mock_insert_result
+
+    data = {"lat": 40.0, "long": -70.0}
     response = client.post("/find-location", json=data)
+
     assert response.status_code == 200
-    assert response.json == {"message": "Location found"}
-    mock_insert.assert_called_once_with(data)
+    json_data = response.get_json()
+    assert json_data["message"] == "Location saved"
+    assert json_data["id"] == "mockid123"
 
 @patch("app.db")
 def test_show_results(mock_find, client):
     """
     Test that show-results page displays mocked emergency services.
     """
-    print("MOCK FIND CALLED")
-    mock_find.analysis.find_one.return_value = mock_db.analysis.find_one.return_value = {
-        "risk_level": "low risk",
-        "nearby_stations": [
-            {"station_name": "Hospital", "distance": 1.2, "functionalities": ["rescue"]},
-            {"station_name": "Police Station", "distance": 0.8, "functionalities": ["law"]}
-        ]
+    mock_find.Request.find_one.return_value = {
+        "location": {"latitude": 40.0, "longitude": -70.0},
+        "resultIDs": [],
+        "Timestamp": "2024-04-01T12:00:00",
+        "ReqType": "location_capture"
     }
-    response = client.get("/show-results")
+
+    #ObjectID is a 24 char string
+    response = client.get("/show-results/0123456789abcdef01234567")
     assert response.status_code == 200
-    assert b"Hospital" in response.data or b"Police Station" in response.data
+    assert b"Nearby Emergency Services" in response.data
