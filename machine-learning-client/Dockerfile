@@ -9,7 +9,7 @@ RUN pip install -r requirements.txt
 RUN pip install --upgrade pip && pip install pipenv
 
 COPY Pipfile Pipfile.lock ./
-RUN pipenv install --system --deploy --ignore-pipfile
+RUN pipenv install --system --ignore-pipfile || pipenv install --system --skip-lock
 
 COPY . .
 

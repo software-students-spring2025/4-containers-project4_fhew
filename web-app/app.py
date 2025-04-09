@@ -23,7 +23,8 @@ def find_location():
 @app.route("/show-results")
 def show_results():
     """Show results from the nearest emergency services search."""
-    analysis = db.analysis.find_one(sort=[('_id', -1)])  # Get the latest result
+    # Get the latest result
+    analysis = db.analysis.find_one(sort=[('_id', -1)])  
     if analysis:
         services = analysis.get("nearby_stations", [])
         risk = analysis.get("risk_level", "Unknown")
@@ -45,4 +46,4 @@ def show_map():
 # main driver function
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5002, debug=True, use_reloader=False, use_debugger=False)
-    #won't let me access the site without the host and port params
+    #fixed port 5000 issue by changing to 5002
