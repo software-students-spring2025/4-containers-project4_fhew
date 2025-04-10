@@ -5,8 +5,10 @@ name = "pypi"
 
 [packages]
 pymongo = "*"
-pandas = "*"
 utm = "*" 
+pandas = "*"
+requests = "*"
+python-dotenv = "*"
 
 [dev-packages]
 pytest = "*"
@@ -16,6 +18,9 @@ coverage = "*"
 pylint = "*"
 matplotlib = "*"
 pymongo = "*"
+pandas = "*"
+requests = "*"
+python-dotenv = "*"
 
 [requires]
 python_version = "3.9"
