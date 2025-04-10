@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Emergency Services Map</title>
@@ -21,7 +22,7 @@
             max-width: 900px;
             margin: 2em auto;
             border-radius: 12px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
         a {
@@ -37,10 +38,11 @@
         }
     </style>
 </head>
+
 <body>
     <h1>Nearby Emergency Services Map</h1>
 
-    <!-- 🗺️ MAP GOES HERE -->
+    <!-- MAP GOES HERE -->
     <div id="map"></div>
 
     <a href="/show-results">← Back to Results</a>
@@ -51,7 +53,6 @@
 
     <script>
         // Mock harcoded data for visualize test
-        const userLocation = { latitude: 40.5412, longitude: -74.1515 };
         const stations = [
             {
                 latitude: 40.5416,
@@ -71,21 +72,29 @@
             }
         ];
 
-        const map = L.map('map').setView([userLocation.latitude, userLocation.longitude], 13);
+        const stored = localStorage.getItem("userLocation");
+        let userLocation = { lat: 0, long: 0 };
+
+        if (stored) {
+            userLocation = JSON.parse(stored);
+        } else {
+            console.warn("Location stored improperly");
+        }
+        console.log("User location is:", userLocation);
+
+        const map = L.map('map').setView([userLocation.lat, userLocation.long], 13);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
-        // User marker
-        L.marker([userLocation.latitude, userLocation.longitude], {
-            title: 'You',
-        }).addTo(map)
-          .bindPopup("📍 Your Location")
-          .openPopup();
+        // Add marker
+        L.marker([userLocation.lat, userLocation.long], {
+            title: 'Your Location'
+        }).addTo(map).bindPopup("📍 You are here").openPopup();
 
-        // Optional radius
-        L.circle([userLocation.latitude, userLocation.longitude], {
+        // Optional radius circle
+        L.circle([userLocation.lat, userLocation.long], {
             radius: 5000,
             color: 'gray',
             fill: false,
@@ -128,4 +137,5 @@
         });
     </script>
 </body>
+
 </html>

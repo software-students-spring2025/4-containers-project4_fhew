@@ -10,7 +10,10 @@ import os
 import math
 import pandas as pd
 import matplotlib.pyplot as plt
+from flask import Flask, request, jsonify
 from pymongo import MongoClient
+
+app = Flask(__name__)
 
 # Connect to MongoDB service in Docker
 client = MongoClient("mongodb://mongodb:27017")
@@ -18,19 +21,15 @@ db = client["gps_data"]
 raw_data_collection = db["gps_input"]  # DB of user input
 analysis_collection = db["analysis"]  # DB of stored analysis
 
+
 # Import CSV
 CSV_PATH = "firestations_info.csv"
 RISK_THRESHOLDS_KM = [1, 5, 10]  # these are cutoffs for risks
 
 
 # analysis is invoked by the interface of the web app part
-def run_analysis():
+def run_analysis(user_location):
     """Main function for ML analysis."""
-    user_location = {
-        "latitude": 40.5412,
-        "longitude": -74.1515,
-    }  # sample location in Staten Island
-
     stations = load_station_data(CSV_PATH)
     nearby_stations = find_near_by_stations(
         user_location["latitude"], user_location["longitude"], stations
@@ -41,8 +40,9 @@ def run_analysis():
         "nearby_stations": nearby_stations,
         "risk_level": risk_level,
     }
-    analysis_collection.insert_one(analysis_result)
+    analysis_collection.insert_one(analysis_result.copy())
     print("Analysis complete. Data inserted into MongoDB!")
+    return analysis_result
 
 
 def find_near_by_stations(user_lat, user_lon, stations, radius_km=5):
@@ -104,6 +104,7 @@ def load_station_data(csv_path):
             "latitude": lat,
             "longitude": lon,
             "functionalities": funcs,
+            "type": "Fire Station"
         }
         stations.append(station)
     return stations
@@ -177,6 +178,19 @@ def visualize_stations(
     print(f"Map image saved to {image_path}")
     return image_path
 
+@app.route("/analyze", methods=["POST"])
+def analyze():
+    data = request.get_json()
+    user_location = data.get("user_location")
+    if not user_location:
+        return jsonify({"error": "Missing user location"}), 400
+    result = run_analysis(user_location)
+    visualize_stations(
+        user_location=user_location,
+        nearby_stations=result["nearby_stations"],
+        image_name="map.png"
+    )
+    return jsonify(result)
 
 if __name__ == "__main__":
-    run_analysis()
+    app.run(host="0.0.0.0", port=8000)
