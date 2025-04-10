@@ -6,7 +6,8 @@ app = Flask(__name__)
 @app.route("/analyze", methods=["POST"])
 def analyze():
     data = request.get_json()
-    result = run_analysis(data)
+    reqID = data.get("id")
+    result = run_analysis(reqID)
     return jsonify(result)
 
 if __name__ == "__main__":

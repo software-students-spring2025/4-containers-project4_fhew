@@ -53,24 +53,21 @@
 
     <script>
         // Mock harcoded data for visualize test
-        const stations = [
-            {
-                latitude: 40.5416,
-                longitude: -74.1519,
-                distance: 0.05,
-                travel_time: 1,
-                name: "Engine 161",
-                functionalities: ["pumper", "ladder"]
-            },
-            {
-                latitude: 40.5422,
-                longitude: -74.1525,
-                distance: 0.08,
-                travel_time: 2,
-                name: "Rescue 5",
-                functionalities: ["rescue"]
-            }
-        ];
+        const stations = [];
+
+        {% if services %}
+                {% for service in services %}
+                    stations.push(
+                        {
+                            latitude: {{ service.lat }},
+                            longitude: {{ service.lon }},
+                            distance: "{{ service.travel_distance }}",
+                            travel_time: "{{ service.travel_time }}",
+                            name: "{{ service.name }}",
+                        }
+                    )
+                {% endfor %}
+        {% endif %}
 
         const stored = localStorage.getItem("userLocation");
         let userLocation = { lat: 0, long: 0 };

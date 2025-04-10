@@ -40,23 +40,26 @@
     <div class="container">
         <h1>Find Emergency Services Near You</h1>
         {% if services %}
-            <ul>
-                {% for service in services %} <!--Temp because this might have to be changed after connecting to database-->
+            <ul style="list-style-type: none; padding: 0;">
+                {% for service in services %}
                     <li>
-                        <strong>{{ service.type }}</strong><br>
-                        Name: {{ service.name }}<br>
-                        Urgency: {{service.urgency}} <br>
+                        <strong>{{ service.name }}</strong><br>
+                        Response Time: {{service.urgency}}<br>
                         Distance: {{ service.travel_distance }} mi<br>
                         ETA: {{ service.travel_time }} mins
-
                     </li>
+                    <li><br></li>
                 {% endfor %}
             </ul>
-            <h2>Risk Level: {{ risk }}</h2>
+            <h2>Risk Level: 
+                <span style="color: {% if risk == 'Low' %}green{% elif risk == 'Medium' %}orange{% else %}red{% endif %};">
+                {{ risk }}
+            </span>
+        </h2>
         {% else %}
             <p>Can't find any services near you. Check back later.</p>
-        {% endif %}
-        <a href="/map">View Full Map</a>
+        {% endif %}        
+        <a href="/map/{{ id }}">View Full Map</a>
         <a href="/">Return home</a>
     </div>
 </body>

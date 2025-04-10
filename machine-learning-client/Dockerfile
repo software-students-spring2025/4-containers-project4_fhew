@@ -15,4 +15,4 @@ COPY . .
 
 RUN mkdir -p /app/static
 
-CMD ["python", "ml_client.py"]
+CMD ["python", "ml_server.py"]

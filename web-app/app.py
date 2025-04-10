@@ -4,11 +4,12 @@ from flask import Flask, render_template, request
 from pymongo import MongoClient
 from datetime import datetime
 from bson import ObjectId
+import os
+import requests
 
 app = Flask(__name__)
 client = MongoClient("mongodb://mongodb:27017")
 db = client["emergency_services"]
-# we will obv have to change this once the mongodb database is sest up
 
 
 @app.route("/")
@@ -34,16 +35,10 @@ def find_location():
     }
 
     inserted = db.Request.insert_one(data)
+    
+    ml_client_url = os.getenv("ML_CLIENT_URL", "http://ml-client:8000")
+    requests.post(f"{ml_client_url}/analyze", json={"id": str(inserted.inserted_id)})
     return {"message": "Location saved", "id": str(inserted.inserted_id)}
-    """
-    data = {}
-    data.Timestamp = datetime.now()
-    data.ReqType = reqType
-    #data.location = ~~~ needs to still be found
-    data.resultIDs = []
-    db.Request.insert_one(data)
-    return {"message": "Location found"}
-    """
 
 
 @app.route("/show-results/<id>")
@@ -57,36 +52,34 @@ def show_results(id):
         if result:
             nearby_services.append(result)
 
+    nearby_services.sort(key=lambda x: int(x['travel_time']))
+    
     user_location = req.get(
         "location", {"latitude": 0, "longitude": 0}
     )  # fallback if missing
     return render_template(
         "show_results.html",
         services=nearby_services,
-        risk="Placeholder",
+        risk=req["risk"],
         image_path="static/map.png",
         user_location=user_location,
+        id=id
     )
-    # for resIds in req.resultIDs:
-    # nearby_services.append(db.Result.find_one({'_id':resIds}))
-    # if nearby_services.count > 0:
-    # risk = analysis.get("risk_level", "Unknown") ~~Needs to be calculated~~
-    # user_location = req.location
-    # return render_template(
-    # "show_results.html",
-    # services=nearby_services,
-    # risk="Placeholder",
-    # image_path="static/map.png",
-    # user_location = user_location
-    # )
-    # else:
-    # return render_template("show_results.html", services=[], risk="No data", image_path=None)
 
 
-@app.route("/map")
-def show_map():
+@app.route("/map/<id>")
+def show_map(id):
     """Display just the generated map image."""
-    return render_template("map.html", image_path="static/map.png")
+    req = db.Request.find_one({"_id": ObjectId(id)})
+    nearby_services = []
+    for res_id in req["resultIDs"]:
+        result = db.Result.find_one({"_id": res_id})
+        if result:
+            nearby_services.append(result)
+
+    nearby_services.sort(key=lambda x: int(x['travel_time']))
+    
+    return render_template("map.html", services=nearby_services, image_path="static/map.png")
 
 
 # main driver function
