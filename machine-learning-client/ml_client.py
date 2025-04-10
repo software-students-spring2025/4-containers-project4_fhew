@@ -12,6 +12,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from flask import Flask, request, jsonify
 from pymongo import MongoClient
+import requests
+from config import GOOGLE_MAPS_API_KEY
 
 app = Flask(__name__)
 
@@ -178,6 +180,32 @@ def visualize_stations(
     print(f"Map image saved to {image_path}")
     return image_path
 
+def query_travel_times(user_lat, user_lon, destinations):
+    origins = f"{user_lat},{user_lon}"
+    destinations = "|".join([f"{lat},{lon}" for lat, lon in destinations])
+    
+    params = {
+        "origins": origins,
+        "destinations": destinations,
+        "key": GOOGLE_MAPS_API_KEY,
+    }
+    
+    response = requests.get("https://maps.googleapis.com/maps/api/distancematrix/json", params=params)
+    data = response.json()
+    
+    clean_data = []
+    for i in range(len(data["rows"][0]["elements"])):
+        temp_dest = data["rows"][0]["elements"][i]
+        if temp_dest["status"] == "OK":
+            clean_data.append({
+                "destination": data["destination_addresses"][i],
+                "distance": temp_dest["distance"]["value"],
+                "distance_text": temp_dest["distance"]["text"],
+                "duration": temp_dest["duration"]["value"],
+                "duration_text": temp_dest["duration"]["text"],
+            })
+    return clean_data
+
 @app.route("/analyze", methods=["POST"])
 def analyze():
     data = request.get_json()
@@ -193,4 +221,7 @@ def analyze():
     return jsonify(result)
 
 if __name__ == "__main__":
+    # test_tt_user = [40.6947665, -73.9555472]
+    # test_tt_dest = [[40.72748565673828, -73.99235534667969], [40.6929079, -73.9485703], [40.693314, -73.9833812]]
+    # print(query_travel_times(test_tt_user[0], test_tt_user[1], test_tt_dest))
     app.run(host="0.0.0.0", port=8000)

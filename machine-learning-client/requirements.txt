@@ -2,3 +2,5 @@ pymongo
 matplotlib
 pandas
 Flask
+python-dotenv
+requests
