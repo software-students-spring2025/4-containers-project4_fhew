@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 pymongo = "*"
 pandas = "*"
+utm = "*" 
 
 [dev-packages]
 pytest = "*"
