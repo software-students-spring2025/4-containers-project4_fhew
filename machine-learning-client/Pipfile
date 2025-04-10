@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 pymongo = "*"
+pandas = "*"
 
 [dev-packages]
 pytest = "*"
@@ -12,7 +13,6 @@ build = "*"
 black = "*"
 coverage = "*"
 pylint = "*"
-pandas = "*"
 matplotlib = "*"
 pymongo = "*"
 

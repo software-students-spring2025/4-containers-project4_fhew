@@ -1,4 +1,9 @@
-"""Tests for the find near by stations"""
+"""
+Tests for the find near by stations
+"""
+
+from ml_client import find_near_by_stations
+
 
 def test_extracting_coordinates():
     "Test 1.0: Verify the coordinates are numbers and valid values"

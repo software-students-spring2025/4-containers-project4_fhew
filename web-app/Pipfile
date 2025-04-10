@@ -6,12 +6,11 @@ name = "pypi"
 [packages]
 flask = "*"
 pymongo = "*"
+pytest = "*"
 
 [dev-packages]
 pylint = "*"
 black = "*"
-pytest = "*"
-pytest-cov = "*"
 
 [requires]
 python_version = "3.10"
