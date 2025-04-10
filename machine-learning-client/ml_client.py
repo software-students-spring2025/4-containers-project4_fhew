@@ -228,10 +228,11 @@ def query_travel_times(user_lat, user_lon, destinations):
 @app.route("/analyze", methods=["POST"])
 def analyze():
     data = request.get_json()
-    user_location = data.get("user_location")
-    if not user_location:
+    reqID = data.get("reqID")
+    if not reqID:
         return jsonify({"error": "Missing user location"}), 400
-    result = run_analysis(user_location)
+    result = run_analysis(reqID)
+    user_location = reqDB.find_one({"_id":reqID}).location
     visualize_stations(
         user_location=user_location,
         nearby_stations=result["nearby_stations"],
