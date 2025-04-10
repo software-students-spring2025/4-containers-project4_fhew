@@ -15,6 +15,7 @@ from pymongo import MongoClient
 import requests
 from config import GOOGLE_MAPS_API_KEY
 import utm
+from bson import ObjectId
 
 app = Flask(__name__)
 
@@ -26,39 +27,60 @@ resDB = db["Result"]  # DB of stored analysis
 
 
 # Import CSV
-CSV_PATH = "firestations_info.csv"
-RISK_THRESHOLDS_KM = [1, 5, 10]  # these are cutoffs for risks
-
+CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "firestations_info.csv")
 
 # analysis is invoked by the interface of the web app part
-def run_analysis(reqID):
+def run_analysis(id):
     
     """Main function for ML analysis."""
-    req = reqDB.find_one({"_id":reqID})
+    req = db.Request.find_one({"_id": ObjectId(id)})
     stations = load_station_data(CSV_PATH)
     nearby_stations = find_near_by_stations(
         req.get("location")["latitude"], req.get("location")["longitude"], stations
     )
-    IDArray = []
-    for station in nearby_stations:
-        risk_level = assign_risk_level(nearby_stations)
-        res = {
-            "name" : station["Station Name"],
-            "location" : {"longitude": station["longitude"], "latitude" : station["latitude"]},
-            "address" : station["Address"],
-            "travel_distance" : station["distance_km"] 
-            #travel time
-            #urgency
-        }
-        retID = resDB.insert_one(res).inserted_id
-        IDArray.append(retID)
+    
+    # API Query
+    destinations = [{"latitude": station["latitude"], "longitude": station["longitude"]} for station in nearby_stations]
+    travel_time_data = query_travel_times(
+        req.get("location")["latitude"], req.get("location")["longitude"], destinations
+    )
+    
+    # Update Request obj to store all Result objs via id
+    travel_time_ids = save_travel_times(travel_time_data)
+    db.Request.update_one(
+        {"_id": ObjectId(id)},
+        {"$set": {"resultIDs": travel_time_ids}}
+    )
+    
+    # Load urgencies to determine overall risk
+    urgencies = set()
+    for res_id in travel_time_ids:
+        result = db.Result.find_one({"_id": res_id})
+        if result:
+            urgencies.add(result['urgency'])
+    if "Quick" in urgencies:
+        risk = "Low"
+    elif "Moderate" in urgencies:
+        risk = "Medium"
+    else:
+        risk = "High"
 
-    reqDB.update_one({"_id":reqID},{"$set" : {"resultIDs":IDArray}})
+    # Update the request document with overall risk
+    db.Request.update_one(
+        {"_id": ObjectId(id)},
+        {"$set": {"risk": risk}}
+    )
+    
     print("Analysis complete. Data inserted into MongoDB!")
-    return reqID
+    
+    return {
+        "id": id,
+        "nearby_stations": nearby_stations,
+        "travel_times": travel_time_data
+    }
 
 
-def UTMtoLatLong(easting,northing):
+def UTMtoLatLong(easting, northing):
     Lat, Long = utm.to_latlon(easting,northing,18,'T')
     return Lat,Long
 
@@ -67,7 +89,7 @@ def find_near_by_stations(user_lat, user_lon, stations, radius_km=5):
     """Find the nearest fire station."""
     nearby = []
     for station in stations:
-        stationLat,stationLong = UTMtoLatLong(station["x"],station["y"])
+        stationLat,stationLong = UTMtoLatLong(station["latitude"],station["longitude"])
         distance = haversine_distance(
             user_lat, user_lon, stationLat, stationLong
         )
@@ -78,26 +100,22 @@ def find_near_by_stations(user_lat, user_lon, stations, radius_km=5):
             station_data["latitude"] = stationLat
             nearby.append(station_data)
     # Sort by distance, closest first.
-    return sorted(nearby, key=lambda s: s["distance_km"])
+    return sorted(nearby, key=lambda s: s["distance_km"])[:5]
 
 
 # assign risk level based on the analysis
-# low risk - surrounded by stations with all functionality
-# moderate risk - surrounded by stations with two functions
-# high risk - surrounded by a single with one function
-# extremly hish risk - no fire station near by
-def assign_risk_level(stations_nearby):
-    """Assign risk level based on the analysis"""
-    if not stations_nearby:
-        return "extremely high risk"
-    max_func = max(len(station["functionalities"]) for station in stations_nearby)
-    if max_func >= 3:
-        return "low risk"
-    if max_func == 2:
-        return "moderate risk"
-    if max_func == 1:
-        return "high risk"
-    return "undetermined"
+# Quick - fire station is less than 5 minutes away
+# Moderate - fire station is 5-10 minutes away
+# Slow - fire station is more than 10 minutes away
+def assign_response_time(travel_time):
+    """Assign response time based on the analysis"""
+    if travel_time <= 5:
+        return "Quick"
+    elif travel_time <= 10:
+        return "Moderate"
+    elif travel_time > 10:
+        return "Slow"
+    return "Undetermined"
 
 
 def load_station_data(csv_path):
@@ -106,8 +124,8 @@ def load_station_data(csv_path):
     stations = []
     for _, row in df.iterrows():
         name = row["Station Name"]
-        lat = row["y"]
-        lon = row["x"]
+        lat = row["x"]
+        lon = row["y"]
 
         # classify nearest station based on functionality (pumper, ladder, rescue vs headquarter)
         funcs = []
@@ -201,11 +219,12 @@ def visualize_stations(
 
 def query_travel_times(user_lat, user_lon, destinations):
     origins = f"{user_lat},{user_lon}"
-    destinations = "|".join([f"{lat},{lon}" for lat, lon in destinations])
+    destinations_array = [[d['latitude'], d['longitude']] for d in destinations]
+    destinations_str = "|".join([f"{d[0]},{d[1]}" for d in destinations_array])
     
     params = {
         "origins": origins,
-        "destinations": destinations,
+        "destinations": destinations_str,
         "key": GOOGLE_MAPS_API_KEY,
     }
     
@@ -218,12 +237,32 @@ def query_travel_times(user_lat, user_lon, destinations):
         if temp_dest["status"] == "OK":
             clean_data.append({
                 "destination": data["destination_addresses"][i],
+                "lat": destinations_array[i][0],
+                "lon": destinations_array[i][1],
                 "distance": temp_dest["distance"]["value"],
                 "distance_text": temp_dest["distance"]["text"],
                 "duration": temp_dest["duration"]["value"],
                 "duration_text": temp_dest["duration"]["text"],
             })
     return clean_data
+
+def save_travel_times(query_response):
+    destination_ids = []
+    
+    for destination in query_response:
+        destination_data = {
+            "name": destination["destination"],
+            "type": "fire",
+            "lat": destination['lat'],
+            "lon": destination['lon'],
+            "travel_time": f"{destination['duration'] / 60:.0f}",
+            "travel_distance": f"{destination['distance'] * 0.000621371:.1f}",
+            "urgency": assign_response_time(destination['duration'] / 60),
+        }
+        destination_obj = db.Result.insert_one(destination_data)
+        destination_ids.append(destination_obj.inserted_id)
+    
+    return destination_ids
 
 @app.route("/analyze", methods=["POST"])
 def analyze():
@@ -241,7 +280,4 @@ def analyze():
     return jsonify(result)
 
 if __name__ == "__main__":
-    # test_tt_user = [40.6947665, -73.9555472]
-    # test_tt_dest = [[40.72748565673828, -73.99235534667969], [40.6929079, -73.9485703], [40.693314, -73.9833812]]
-    # print(query_travel_times(test_tt_user[0], test_tt_user[1], test_tt_dest))
     app.run(host="0.0.0.0", port=8000)
