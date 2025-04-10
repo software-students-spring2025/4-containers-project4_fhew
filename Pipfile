@@ -9,6 +9,10 @@ pytest-cov = "*"
 flask = "*"
 pymongo = "*"
 requests = "*"
+pandas = "*"
+matplotlib = "*"
+python-dotenv = "*"
+utm = "*"
 
 [dev-packages]
 
