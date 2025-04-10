@@ -1,4 +1,9 @@
-"""Tests for the Machine Learning risk analysis"""
+"""
+Tests for the Machine Learning risk analysis
+"""
+
+from ml_client import haversine_distance
+
 
 def test_risk_classification():
     "Test 1.0: Verify that the correct risk is assigned to the number of stations counted"

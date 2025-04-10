@@ -1,3 +1,10 @@
+"""
+Tests for machine learning visualization.
+"""
+
+import os
+from ml_client import visualize_stations
+
 def test_visualize_stations_creates_image(tmp_path):
     user_loc = {"latitude": 40.7, "longitude": -74.0}
     stations = [
