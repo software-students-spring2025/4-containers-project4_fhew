@@ -27,37 +27,41 @@ resDB = db["Result"]  # DB of stored analysis
 
 
 # Import CSV
-CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "firestations_info.csv")
+CSV_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "firestations_info.csv"
+)
+
 
 # analysis is invoked by the interface of the web app part
 def run_analysis(id):
-    
     """Main function for ML analysis."""
     req = db.Request.find_one({"_id": ObjectId(id)})
     stations = load_station_data(CSV_PATH)
     nearby_stations = find_near_by_stations(
         req.get("location")["latitude"], req.get("location")["longitude"], stations
     )
-    
+
     # API Query
-    destinations = [{"latitude": station["latitude"], "longitude": station["longitude"]} for station in nearby_stations]
+    destinations = [
+        {"latitude": station["latitude"], "longitude": station["longitude"]}
+        for station in nearby_stations
+    ]
     travel_time_data = query_travel_times(
         req.get("location")["latitude"], req.get("location")["longitude"], destinations
     )
-    
+
     # Update Request obj to store all Result objs via id
     travel_time_ids = save_travel_times(travel_time_data)
     db.Request.update_one(
-        {"_id": ObjectId(id)},
-        {"$set": {"resultIDs": travel_time_ids}}
+        {"_id": ObjectId(id)}, {"$set": {"resultIDs": travel_time_ids}}
     )
-    
+
     # Load urgencies to determine overall risk
     urgencies = set()
     for res_id in travel_time_ids:
         result = db.Result.find_one({"_id": res_id})
         if result:
-            urgencies.add(result['urgency'])
+            urgencies.add(result["urgency"])
     if "Quick" in urgencies:
         risk = "Low"
     elif "Moderate" in urgencies:
@@ -66,33 +70,31 @@ def run_analysis(id):
         risk = "High"
 
     # Update the request document with overall risk
-    db.Request.update_one(
-        {"_id": ObjectId(id)},
-        {"$set": {"risk": risk}}
-    )
-    
+    db.Request.update_one({"_id": ObjectId(id)}, {"$set": {"risk": risk}})
+
     print("Analysis complete. Data inserted into MongoDB!")
-    
+
     return {
         "id": id,
         "nearby_stations": nearby_stations,
-        "travel_times": travel_time_data
+        "travel_times": travel_time_data,
     }
 
 
 def UTMtoLatLong(easting, northing):
-    Lat, Long = utm.to_latlon(easting,northing,18,'T')
-    return Lat,Long
+    """Convert UTM to latitude and longitude values"""
+    Lat, Long = utm.to_latlon(easting, northing, 18, "T")
+    return Lat, Long
 
 
 def find_near_by_stations(user_lat, user_lon, stations, radius_km=5):
     """Find the nearest fire station."""
     nearby = []
     for station in stations:
-        stationLat,stationLong = UTMtoLatLong(station["latitude"],station["longitude"])
-        distance = haversine_distance(
-            user_lat, user_lon, stationLat, stationLong
+        stationLat, stationLong = UTMtoLatLong(
+            station["latitude"], station["longitude"]
         )
+        distance = haversine_distance(user_lat, user_lon, stationLat, stationLong)
         if distance <= radius_km:
             station_data = station.copy()
             station_data["distance_km"] = distance
@@ -143,7 +145,7 @@ def load_station_data(csv_path):
             "latitude": lat,
             "longitude": lon,
             "functionalities": funcs,
-            "type": "Fire Station"
+            "type": "Fire Station",
         }
         stations.append(station)
     return stations
@@ -217,67 +219,79 @@ def visualize_stations(
     print(f"Map image saved to {image_path}")
     return image_path
 
+
 def query_travel_times(user_lat, user_lon, destinations):
+    """Uses Google Maps API to find travel distance and time from user's location
+    to nearby stations."""
     origins = f"{user_lat},{user_lon}"
-    destinations_array = [[d['latitude'], d['longitude']] for d in destinations]
+    destinations_array = [[d["latitude"], d["longitude"]] for d in destinations]
     destinations_str = "|".join([f"{d[0]},{d[1]}" for d in destinations_array])
-    
+
     params = {
         "origins": origins,
         "destinations": destinations_str,
         "key": GOOGLE_MAPS_API_KEY,
     }
-    
-    response = requests.get("https://maps.googleapis.com/maps/api/distancematrix/json", params=params)
+
+    response = requests.get(
+        "https://maps.googleapis.com/maps/api/distancematrix/json", params=params
+    )
     data = response.json()
-    
+
     clean_data = []
     for i in range(len(data["rows"][0]["elements"])):
         temp_dest = data["rows"][0]["elements"][i]
         if temp_dest["status"] == "OK":
-            clean_data.append({
-                "destination": data["destination_addresses"][i],
-                "lat": destinations_array[i][0],
-                "lon": destinations_array[i][1],
-                "distance": temp_dest["distance"]["value"],
-                "distance_text": temp_dest["distance"]["text"],
-                "duration": temp_dest["duration"]["value"],
-                "duration_text": temp_dest["duration"]["text"],
-            })
+            clean_data.append(
+                {
+                    "destination": data["destination_addresses"][i],
+                    "lat": destinations_array[i][0],
+                    "lon": destinations_array[i][1],
+                    "distance": temp_dest["distance"]["value"],
+                    "distance_text": temp_dest["distance"]["text"],
+                    "duration": temp_dest["duration"]["value"],
+                    "duration_text": temp_dest["duration"]["text"],
+                }
+            )
     return clean_data
 
+
 def save_travel_times(query_response):
+    """Saves calculated travel time data into database."""
     destination_ids = []
-    
+
     for destination in query_response:
         destination_data = {
             "name": destination["destination"],
             "type": "fire",
-            "lat": destination['lat'],
-            "lon": destination['lon'],
+            "lat": destination["lat"],
+            "lon": destination["lon"],
             "travel_time": f"{destination['duration'] / 60:.0f}",
             "travel_distance": f"{destination['distance'] * 0.000621371:.1f}",
-            "urgency": assign_response_time(destination['duration'] / 60),
+            "urgency": assign_response_time(destination["duration"] / 60),
         }
         destination_obj = db.Result.insert_one(destination_data)
         destination_ids.append(destination_obj.inserted_id)
-    
+
     return destination_ids
+
 
 @app.route("/analyze", methods=["POST"])
 def analyze():
+    """Flask POST endpoint to prompt ML analysis."""
     data = request.get_json()
     reqID = data.get("reqID")
     if not reqID:
         return jsonify({"error": "Missing user location"}), 400
     result = run_analysis(reqID)
-    user_location = reqDB.find_one({"_id":reqID}).location
+    user_location = reqDB.find_one({"_id": reqID}).location
     visualize_stations(
         user_location=user_location,
         nearby_stations=result["nearby_stations"],
-        image_name="map.png"
+        image_name="map.png",
     )
     return jsonify(result)
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)
