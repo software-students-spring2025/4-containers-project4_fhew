@@ -2,7 +2,7 @@
 Unit tests for run_analysis.
 """
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from ml_client import run_analysis
 
 

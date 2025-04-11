@@ -2,7 +2,6 @@
 Unit tests for load_station_data.
 """
 
-import pandas as pd
 import tempfile
 import os
 from ml_client import load_station_data
