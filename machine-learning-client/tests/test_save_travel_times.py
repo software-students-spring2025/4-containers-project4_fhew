@@ -21,8 +21,8 @@ def test_save_travel_times(mock_db):
             "destination": "50 W 4th St",
             "lat": 40.7,
             "lon": -74.0,
-            "distance": 1000,
-            "distance_text": "1 km",
+            "distance": 5000,
+            "distance_text": "5 km",
             "duration": 300,
             "duration_text": "5 mins",
         }
