@@ -2,8 +2,8 @@
 Unit test file for analyze_route method
 """
 
-import pytest
 from unittest.mock import patch, MagicMock
+import pytest
 from ml_client import app
 
 
