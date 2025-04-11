@@ -3,11 +3,13 @@
 import os
 import pytest
 
+
 @pytest.fixture
 def temp_data_dir(tmp_path):
-    """create a temporary DB dir for access test"""
+    """Create a temporary DB dir for access test"""
     test_dir.mkdir(parents=True, exist_ok=True)
     return test_dir
+
 
 @pytest.fixture
 def clean_up_temp_dir():

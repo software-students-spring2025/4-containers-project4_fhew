@@ -20,7 +20,7 @@ def home():
 
 @app.route("/find-location", methods=["POST"])
 def find_location():
-    """Collect geolocationdata and store it in the mongodb database."""
+    """Collect geolocation data and store it in the mongodb database."""
     content = request.get_json()
     latitude = content.get("lat")
     longitude = content.get("long")
@@ -35,7 +35,7 @@ def find_location():
     }
 
     inserted = db.Request.insert_one(data)
-    
+
     ml_client_url = os.getenv("ML_CLIENT_URL", "http://ml-client:8000")
     requests.post(f"{ml_client_url}/analyze", json={"id": str(inserted.inserted_id)})
     return {"message": "Location saved", "id": str(inserted.inserted_id)}
@@ -52,8 +52,8 @@ def show_results(id):
         if result:
             nearby_services.append(result)
 
-    nearby_services.sort(key=lambda x: int(x['travel_time']))
-    
+    nearby_services.sort(key=lambda x: int(x["travel_time"]))
+
     user_location = req.get(
         "location", {"latitude": 0, "longitude": 0}
     )  # fallback if missing
@@ -63,7 +63,7 @@ def show_results(id):
         risk=req["risk"],
         image_path="static/map.png",
         user_location=user_location,
-        id=id
+        id=id,
     )
 
 
@@ -77,9 +77,11 @@ def show_map(id):
         if result:
             nearby_services.append(result)
 
-    nearby_services.sort(key=lambda x: int(x['travel_time']))
-    
-    return render_template("map.html", services=nearby_services, image_path="static/map.png")
+    nearby_services.sort(key=lambda x: int(x["travel_time"]))
+
+    return render_template(
+        "map.html", services=nearby_services, image_path="static/map.png"
+    )
 
 
 # main driver function
