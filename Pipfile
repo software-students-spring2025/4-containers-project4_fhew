@@ -15,6 +15,7 @@ python-dotenv = "*"
 utm = "*"
 
 [dev-packages]
+tomli = "*"
 
 [requires]
 python_version = "3.9"

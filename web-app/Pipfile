@@ -12,6 +12,7 @@ requests = "*"
 [dev-packages]
 pylint = "*"
 black = "*"
+tomli = "*"
 
 [requires]
 python_version = "3.x"

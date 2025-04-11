@@ -3,18 +3,6 @@ Unit test file for analyze_route method
 """
 
 from unittest.mock import patch, MagicMock
-import pytest
-from ml_client import app
-
-
-@pytest.fixture
-def test_client():
-    """
-    Fixture to create test client for Flask.
-    """
-    app.config["TESTING"] = True
-    with app.test_client() as client:
-        yield client
 
 
 def test_analyze(test_client):
@@ -23,7 +11,7 @@ def test_analyze(test_client):
     """
     with patch("ml_client.run_analysis") as mock_run_analysis, patch(
         "ml_client.visualize_stations"
-    ) as mock_visualize, patch("ml_client.reqDB.find_one") as mock_find_one:
+    ) as _, patch("ml_client.reqDB.find_one") as mock_find_one:
 
         mock_run_analysis.return_value = {
             "id": "123",
