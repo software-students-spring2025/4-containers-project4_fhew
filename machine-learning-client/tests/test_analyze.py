@@ -3,8 +3,6 @@ Unit test file for analyze_route method
 """
 
 from unittest.mock import patch, MagicMock
-from ml_client import analyze
-import pytest
 
 
 def test_analyze(test_client):
